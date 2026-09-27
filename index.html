@@ -1,0 +1,466 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>You've Got Mail 📬</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #151b23;
+    --surface-2: #1c232d;
+    --line: #2a323d;
+    --text: #e6edf3;
+    --text-dim: #8b96a3;
+    --amber: #f2a94f;
+    --green: #5fb98a;
+    --red: #e5534b;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: inherit; }
+  html, body {
+    margin: 0; padding: 0; min-height: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .wrap {
+    max-width: 560px; margin: 0 auto; padding: 32px 20px 64px;
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+  }
+  /* --- Scene 1: bait --- */
+  #bait { text-align: center; animation: fadein .5s ease; }
+  .badge {
+    display: inline-block; font-size: 13px; letter-spacing: .02em;
+    color: var(--amber); background: rgba(242,169,79,.1);
+    border: 1px solid rgba(242,169,79,.3); border-radius: 20px;
+    padding: 5px 14px; margin-bottom: 22px;
+  }
+  #bait h1 {
+    font-size: clamp(28px, 7vw, 40px); line-height: 1.15; margin: 0 0 14px;
+    font-weight: 600;
+  }
+  #bait p.sub {
+    color: var(--text-dim); font-size: 16px; line-height: 1.6;
+    max-width: 400px; margin: 0 auto 32px;
+  }
+  .claim-btn {
+    background: var(--amber); color: #1a1206; border: none;
+    font-size: 17px; font-weight: 600; font-family: inherit;
+    padding: 15px 36px; border-radius: 10px; cursor: pointer;
+    transition: transform .15s ease;
+  }
+  .claim-btn:active { transform: scale(.97); }
+  .fine { color: var(--text-dim); font-size: 12px; margin-top: 18px; }
+
+  /* --- Scene 2: reveal --- */
+  #reveal { display: none; }
+  #reveal.show { display: block; animation: fadein .4s ease; }
+  .reveal-head { margin-bottom: 22px; }
+  .reveal-head h2 { font-size: 22px; margin: 0 0 6px; font-weight: 600; }
+  .reveal-head p { color: var(--text-dim); font-size: 14px; margin: 0; line-height: 1.5; }
+  .timer {
+    font-size: 13px; color: var(--amber); margin-top: 10px;
+  }
+  .data-list { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 20px 0; }
+  .data-live-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 16px; background:var(--surface-2); border-bottom:1px solid var(--line); }
+  .data-live-head span:first-child { font-size:12px; color:var(--text-dim); }
+  .data-count { font-size:11px; color:var(--green); }
+  .data-list.empty::after { content:"Waiting for data…"; display:block; padding:18px 16px; color:var(--text-dim); font-size:13px; }
+  .data-row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    opacity: 0; transform: translateY(4px);
+  }
+  .data-row:last-child { border-bottom: none; }
+  .data-row.in { animation: rowin .35s ease forwards; }
+  @keyframes rowin { to { opacity: 1; transform: translateY(0); } }
+  .data-label { color: var(--text-dim); font-size: 13px; flex-shrink: 0; }
+  .data-val { font-size: 13px; text-align: right; word-break: break-word; }
+
+  .probe-section { margin-top: 28px; }
+  .probe-section h3 { font-size: 14px; color: var(--text-dim); font-weight: 500; margin: 0 0 10px; text-transform: none; }
+  .probe-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px; margin-bottom: 12px;
+  }
+  .probe-card p { margin: 0 0 10px; font-size: 14px; color: var(--text-dim); line-height: 1.5; }
+  .probe-card input {
+    width: 100%; padding: 11px 13px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text); font-family: inherit; font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .probe-btn {
+    background: var(--surface-2); color: var(--text); border: 1px solid var(--line);
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    padding: 10px 16px; border-radius: 8px; cursor: pointer; width: 100%;
+  }
+  .probe-result {
+    margin-top: 10px; font-size: 13px; padding: 10px 12px; border-radius: 8px;
+    display: none; line-height: 1.5;
+  }
+  .probe-result.show { display: block; }
+  .probe-result.warn { background: rgba(229,83,75,.12); color: #f0918a; border: 1px solid rgba(229,83,75,.3); }
+
+  .tips { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .tips h3 { font-size: 15px; margin: 0 0 10px; font-weight: 600; }
+  .tips ul { margin: 0; padding-left: 18px; color: var(--text-dim); font-size: 14px; line-height: 1.7; }
+
+  .next-btn {
+    display: block; width: 100%; margin-top: 26px;
+    background: var(--red); color: #fff; border: none;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    padding: 14px 20px; border-radius: 10px; cursor: pointer;
+  }
+
+  /* --- Scene 3: simulated email --- */
+  #emailScene { display: none; }
+  #emailScene.show { display: block; animation: fadein .4s ease; }
+  .sim-banner {
+    background: var(--red); color: #fff; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; font-weight: 700; letter-spacing: .03em; text-align: center;
+    padding: 9px 10px; border-radius: 8px 8px 0 0;
+  }
+  .email-shell {
+    border: 2px solid var(--red); border-radius: 12px; overflow: hidden; margin: 18px 0 8px;
+  }
+  .email-body {
+    background: #ffffff; color: #1a1a1a; padding: 26px 24px; font-size: 14px; line-height: 1.6;
+    position: relative; overflow: hidden;
+  }
+  .email-watermark {
+    position: absolute; inset: 0; pointer-events: none;
+    display: flex; flex-wrap: wrap; align-content: space-around; justify-content: space-around;
+    opacity: .09; transform: rotate(-22deg) scale(1.3); overflow: hidden;
+  }
+  .email-watermark span {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px;
+    color: #c0201a; white-space: nowrap; margin: 10px 18px;
+  }
+  .email-content { position: relative; z-index: 1; }
+  .email-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #eaeaea; }
+  .email-logo {
+    width: 34px; height: 34px; border-radius: 8px; background: #2e5fdb;
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; flex-shrink: 0;
+  }
+  .email-from { font-size: 13px; color: #6b6b6b; }
+  .email-from b { color: #1a1a1a; }
+  .email-content h4 { font-size: 17px; margin: 0 0 14px; color: #1a1a1a; }
+  .email-content p { margin: 0 0 14px; color: #333; }
+  .email-detail-box { background: #f4f5f7; border-radius: 8px; padding: 14px 16px; margin: 0 0 16px; font-size: 13px; }
+  .email-detail-box div { display: flex; justify-content: space-between; padding: 3px 0; color: #444; }
+  .email-detail-box b { color: #1a1a1a; }
+  .email-cta {
+    display: inline-block; background: #2e5fdb; color: #fff !important; text-decoration: none;
+    padding: 11px 22px; border-radius: 7px; font-size: 14px; font-weight: 600; margin: 4px 0 16px;
+  }
+  .email-link-preview { font-size: 12px; color: #8a8a8a; word-break: break-all; }
+
+  .tactic-list { margin-top: 20px; }
+  .tactic-list h3 { font-size: 14px; font-weight: 600; margin: 0 0 10px; }
+  .tactic-row {
+    display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px;
+  }
+  .tactic-row:last-child { border-bottom: none; }
+  .tactic-tag {
+    flex-shrink: 0; color: var(--amber); font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding-top: 1px;
+  }
+  .tactic-row p { margin: 0; color: var(--text-dim); line-height: 1.5; }
+
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f7f7f5; --surface: #ffffff; --surface-2: #f0f0ee; --line: #e3e2de;
+      --text: #14161a; --text-dim: #62666e;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="bait">
+    <span class="badge mono">COOKIE NOTICE</span>
+    <h1>You've won a free coffee ☕</h1>
+    <p class="sub">Congrats — you're one of today's lucky visitors. Accept cookies below to continue and claim your reward.</p>
+    <button class="claim-btn" onclick="reveal()">Accept cookies &amp; continue</button>
+    <p class="fine">By continuing, you agree to our totally real and definitely normal cookie policy.*</p>
+  </div>
+
+  <div id="reveal">
+    <div class="reveal-head">
+      <h2>There's no coffee. 🙃</h2>
+      <p>But in the time it took you to read "You've won a free coffee," this page already learned the following about you — just from the click.</p>
+      <p class="timer mono">⏱ time on this page: <span id="timeOn">0.0s</span></p>
+    </div>
+
+    <div class="data-list empty" id="dataList">
+      <div class="data-live-head"><span>LIVE DATA COLLECTED</span><span class="data-count" id="dataCount">0 items</span></div>
+    </div>
+
+    <div class="probe-section">
+      <h3>What a real scam page could get if you gave it more permission:</h3>
+
+      <div class="probe-card">
+        <p>And a "verify your location for pickup" prompt gets your exact GPS coordinates, not just your general area.</p>
+        <button class="probe-btn" id="locationBtn" onclick="tryLocation()">Verify my location</button>
+        <div class="probe-result warn" id="locResult"></div>
+      </div>
+
+      <div class="probe-card">
+        <p>One more: sites also ask for a blanket "accept" on cookies/permissions — which quietly unlocks a deeper fingerprint than anything above.</p>
+        <button class="probe-btn" id="acceptMoreBtn" onclick="acceptMore()">Accept all &amp; continue</button>
+        <div class="probe-result warn" id="acceptResult"></div>
+      </div>
+    </div>
+
+    <div class="tips">
+      <h3>How to actually protect yourself</h3>
+      <ul>
+        <li>Check the domain before you click — this page lives at a domain built to look suspicious on purpose.</li>
+        <li>Unexpected prizes, QR codes on flyers/parking meters, and "urgent" links are the classic bait.</li>
+        <li>Device and browser info leaks to <em>any</em> site you visit — that part isn't avoidable, just don't hand over more (email, location, passwords) to sites you don't trust.</li>
+        <li>When in doubt, type the company's real URL yourself instead of tapping a link or QR code.</li>
+      </ul>
+    </div>
+
+    <button class="next-btn" onclick="showEmailScene()">Next: see how this data can be used in a follow-up scam email →</button>
+  </div>
+
+  <div id="emailScene">
+    <div class="reveal-head">
+      <h2>Here's the follow-up.</h2>
+      <p>A few hours later, "IT Security" emails you — personalized with exactly the details this page collected. This is a simulation: nothing was sent, and it isn't styled after any real company.</p>
+    </div>
+
+    <div class="email-shell">
+      <div class="sim-banner">⚠ SIMULATED EMAIL — TRAINING EXERCISE ONLY — NOT SENT</div>
+      <div class="email-body">
+        <div class="email-watermark" id="watermarkGrid"></div>
+        <div class="email-content">
+          <div class="email-hdr">
+            <div class="email-logo">🛡</div>
+            <div class="email-from">Account Security &lt;<b>no-reply@notphishing.lol</b>&gt;<br>to: you</div>
+          </div>
+          <h4>We noticed a new sign-in to your account</h4>
+          <p>We detected a sign-in from a device we don't recognize. If this was you, no action is needed — but if you don't recognize this activity, please secure your account immediately.</p>
+          <div class="email-detail-box mono" id="emailDetails"></div>
+          <p>For your protection, we recommend resetting your password now.</p>
+          <a class="email-cta">Reset my password</a>
+          <p class="email-link-preview">Link destination: passwordreset.notphishing.lol/verify — <em>not</em> your real account provider's domain.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tactic-list">
+      <h3>The manipulation tactics at work here</h3>
+      <div class="tactic-row"><span class="tactic-tag">URGENCY</span><p>"Immediately" and a flagged sign-in create pressure to act before thinking.</p></div>
+      <div class="tactic-row"><span class="tactic-tag">PERSONALIZATION</span><p>Your actual device, OS, and location make it feel targeted and credible — all from data volunteered a few minutes ago.</p></div>
+      <div class="tactic-row"><span class="tactic-tag">AUTHORITY</span><p>Generic "Account Security" / shield branding borrows the visual language of legitimate IT systems without naming one.</p></div>
+      <div class="tactic-row"><span class="tactic-tag">LOOKALIKE LINK</span><p>The button text says "reset my password," but the real destination is a domain designed to be skimmed past, not read.</p></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let startTime = null, timerInt = null;
+
+  function fmtLang(langs) { return langs && langs.length ? langs.join(', ') : navigator.language || 'unknown'; }
+
+  function detectDevice() {
+    const ua = navigator.userAgent;
+    if (/iPad|Tablet/i.test(ua)) return 'Tablet';
+    if (/Mobi|Android/i.test(ua)) return 'Mobile phone';
+    return 'Desktop / laptop';
+  }
+
+  function detectOS() {
+    const ua = navigator.userAgent;
+    if (/Windows/i.test(ua)) return 'Windows';
+    if (/Mac OS X/i.test(ua)) return 'macOS';
+    if (/Android/i.test(ua)) return 'Android';
+    if (/iPhone|iPad|iOS/i.test(ua)) return 'iOS';
+    if (/Linux/i.test(ua)) return 'Linux';
+    return 'Unknown';
+  }
+
+  function detectBrowser() {
+    const ua = navigator.userAgent;
+    if (/Edg\//.test(ua)) return 'Microsoft Edge';
+    if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) return 'Chrome';
+    if (/Firefox\//.test(ua)) return 'Firefox';
+    if (/Safari\//.test(ua) && !/Chrome/.test(ua)) return 'Safari';
+    return 'Unknown';
+  }
+
+  function collectDataRows() {
+    const conn = navigator.connection || navigator.webkitConnection;
+    return [
+      ['Device type', detectDevice()],
+      ['Operating system', detectOS()],
+      ['Browser', detectBrowser()],
+      ['Screen resolution', screen.width + ' × ' + screen.height + ' px'],
+      ['Language(s)', fmtLang(navigator.languages)],
+      ['Time zone', Intl.DateTimeFormat().resolvedOptions().timeZone],
+      ['Referring page', document.referrer ? document.referrer : '(direct / QR scan — no referrer)'],
+      ['Network type', conn && conn.effectiveType ? conn.effectiveType.toUpperCase() : 'not exposed by this browser'],
+      ['CPU cores reported', navigator.hardwareConcurrency || 'not exposed'],
+      ['Cookies enabled', navigator.cookieEnabled ? 'Yes' : 'No']
+    ];
+  }
+
+  function addDataRow(label, value) {
+    const list = document.getElementById('dataList');
+    list.classList.remove('empty');
+    const el = document.createElement('div');
+    el.className = 'data-row';
+    el.innerHTML = `<span class="data-label">${label}</span><span class="data-val mono">${value}</span>`;
+    list.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('in'));
+    const count = list.querySelectorAll('.data-row').length;
+    document.getElementById('dataCount').textContent = count + (count === 1 ? ' item' : ' items');
+    return el;
+  }
+
+  function addDataRow(label, value) {
+    const list = document.getElementById('dataList');
+    const el = document.createElement('div');
+    el.className = 'data-row';
+    el.innerHTML = `<span class="data-label">${label}</span><span class="data-val mono">${value}</span>`;
+    list.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('in'));
+  }
+
+  function reveal() {
+    document.getElementById('bait').style.display = 'none';
+    const panel = document.getElementById('reveal');
+    panel.classList.add('show');
+
+    startTime = performance.now();
+    timerInt = setInterval(() => {
+      const t = ((performance.now() - startTime) / 1000).toFixed(1);
+      document.getElementById('timeOn').textContent = t + 's';
+    }, 100);
+
+    // Simulate the way information becomes available over the course of a visit.
+    // Each row is displayed only after it is "collected."
+    const rows = collectDataRows();
+    rows.forEach((r, i) => {
+      setTimeout(() => addDataRow(r[0], r[1]), 250 + i * 650);
+    });
+  }
+
+  function tryLocation() {
+    const box = document.getElementById('locResult');
+    box.classList.add('show');
+    if (!navigator.geolocation) {
+      box.textContent = 'Geolocation isn\'t available in this browser.';
+      document.getElementById('locationBtn').style.display = 'none';
+      return;
+    }
+    box.textContent = 'Requesting permission…';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        lastCoords = pos.coords;
+        box.textContent = `Exact coordinates: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} — accurate to about ${Math.round(pos.coords.accuracy)}m. (Not stored or sent anywhere — this demo only reads it back to you.)`;
+        addDataRow('Precise location', `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (±${Math.round(pos.coords.accuracy)}m)`);
+        document.getElementById('locationBtn').style.display = 'none';
+      },
+      () => {
+        box.textContent = 'Permission denied — good instinct. A real scam page only needed one tap to get this.';
+        document.getElementById('locationBtn').style.display = 'none';
+      }
+    );
+  }
+
+  let lastCoords = null;
+
+  async function acceptMore() {
+    const box = document.getElementById('acceptResult');
+    box.classList.add('show');
+    box.textContent = 'Gathering…';
+    const extras = [];
+
+    if (navigator.getBattery) {
+      try {
+        const b = await navigator.getBattery();
+        extras.push(`battery ${Math.round(b.level * 100)}%${b.charging ? ' (charging)' : ''}`);
+      } catch (e) {}
+    }
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (gl) {
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        if (dbg) extras.push('GPU: ' + gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));
+      }
+    } catch (e) {}
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cams = devices.filter(d => d.kind === 'videoinput').length;
+      const mics = devices.filter(d => d.kind === 'audioinput').length;
+      extras.push(`${cams} camera(s), ${mics} microphone(s) present (not accessed)`);
+    } catch (e) {}
+    extras.push(`touch support: ${('ontouchstart' in window) ? 'yes' : 'no'}`);
+    extras.push(`storage/cookies already allowed: ${navigator.cookieEnabled ? 'yes' : 'no'}`);
+
+    extras.forEach(item => {
+      const split = item.indexOf(': ');
+      if (split > -1) {
+        addDataRow(item.slice(0, split), item.slice(split + 2));
+      } else {
+        addDataRow('Additional device data', item);
+      }
+    });
+    box.textContent = extras.length
+      ? 'Added to the chart above. None of this needed a typed answer — just "accept."'
+      : 'This browser did not expose additional data.';
+    document.getElementById('acceptMoreBtn').style.display = 'none';
+  }
+
+  function buildWatermark() {
+    const grid = document.getElementById('watermarkGrid');
+    for (let i = 0; i < 24; i++) {
+      const s = document.createElement('span');
+      s.textContent = 'SIMULATED · TRAINING ONLY';
+      grid.appendChild(s);
+    }
+  }
+
+  function showEmailScene() {
+    if (timerInt) clearInterval(timerInt);
+    document.getElementById('reveal').classList.remove('show');
+    document.getElementById('emailScene').classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    buildWatermark();
+
+    const now = new Date();
+    const timeStr = now.toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' });
+    const loc = lastCoords
+      ? `${lastCoords.latitude.toFixed(2)}, ${lastCoords.longitude.toFixed(2)} (from earlier "verify location" step)`
+      : Intl.DateTimeFormat().resolvedOptions().timeZone.replace('_', ' ');
+
+    const details = document.getElementById('emailDetails');
+    details.innerHTML = `
+      <div><span>Device</span><b>${detectBrowser()} on ${detectOS()} (${detectDevice()})</b></div>
+      <div><span>Approx. location</span><b>${loc}</b></div>
+      <div><span>Time</span><b>${timeStr}</b></div>
+      <div><span>IP-based network</span><b>${(navigator.connection && navigator.connection.effectiveType) ? navigator.connection.effectiveType.toUpperCase() : 'residential/mobile'}</b></div>
+    `;
+  }
+</script>
+</body>
+</html>
